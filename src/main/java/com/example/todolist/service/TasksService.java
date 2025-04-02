@@ -37,11 +37,14 @@ public class TasksService {
     }
 
     public void deleteTask(Long id) {
+        Task taskToDelete = tasksRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
         tasksRepository.deleteById(id);
     }
 
     public Task completeTask(Long id) {
-        Task taskToUpdate = tasksRepository.findById(id).get();
+        Task taskToUpdate = tasksRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));;
         taskToUpdate.setCompleted(true);
         return tasksRepository.saveAndFlush(taskToUpdate);
     }
