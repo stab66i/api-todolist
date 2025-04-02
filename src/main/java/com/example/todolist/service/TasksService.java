@@ -1,8 +1,10 @@
 package com.example.todolist.service;
 
+import com.example.todolist.exception.TaskNotFound;
 import com.example.todolist.model.Task;
 import com.example.todolist.repository.TasksRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,11 +23,13 @@ public class TasksService {
     }
 
     public Task getTaskById(Long id) {
-        return tasksRepository.findById(id).get();
+        return tasksRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
     }
 
     public Task updateTask(Long id, Task task) {
-        Task taskToUpdate = tasksRepository.findById(id).get();
+        Task taskToUpdate = tasksRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
         taskToUpdate.setCompleted(task.getCompleted());
         taskToUpdate.setDescription(task.getDescription());
         taskToUpdate.setTitle(task.getTitle());
