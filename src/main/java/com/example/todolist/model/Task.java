@@ -20,12 +20,5 @@ public class Task {
 
     private String description;
 
-    private Boolean completed;
-
-    @PrePersist
-    protected void onCreate() {
-        if (completed == null) {
-            completed = false;
-        }
-    }
+    private Boolean completed = false;
 }
