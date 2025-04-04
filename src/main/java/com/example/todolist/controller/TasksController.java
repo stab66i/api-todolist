@@ -4,6 +4,7 @@ import com.example.todolist.model.Task;
 import com.example.todolist.model.TaskRequestDTO;
 import com.example.todolist.model.TaskResponseDTO;
 import com.example.todolist.service.TasksService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class TasksController {
     private final TasksService tasksService;
 
     @PostMapping()
-    public TaskResponseDTO createTask(@RequestBody TaskRequestDTO taskRequestDTO) {
+    public TaskResponseDTO createTask(@RequestBody @Valid TaskRequestDTO taskRequestDTO) {
         return tasksService.createTask(taskRequestDTO);
     }
 
@@ -31,7 +32,7 @@ public class TasksController {
     }
 
     @PutMapping("/{id}")
-    public TaskResponseDTO updateTask(@PathVariable Long id, @RequestBody TaskRequestDTO taskRequestDTO) {
+    public TaskResponseDTO updateTask(@PathVariable Long id, @RequestBody @Valid TaskRequestDTO taskRequestDTO) {
         return tasksService.updateTask(id, taskRequestDTO);
     }
 
