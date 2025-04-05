@@ -45,4 +45,9 @@ public class TasksController {
     public TaskResponseDTO completeTask(@PathVariable Long id) {
         return tasksService.completeTask(id);
     }
+
+    @GetMapping("/filter")
+    public List<TaskResponseDTO> getTasksByCompleted(@RequestParam Boolean completed) {
+        return tasksService.getTasksByCompleted(completed);
+    }
 }

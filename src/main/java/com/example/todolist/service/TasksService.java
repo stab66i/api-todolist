@@ -1,6 +1,7 @@
 package com.example.todolist.service;
 
 import com.example.todolist.exception.TaskNotFound;
+import com.example.todolist.mapper.TaskMapper;
 import com.example.todolist.model.Task;
 import com.example.todolist.model.TaskRequestDTO;
 import com.example.todolist.model.TaskResponseDTO;
@@ -11,20 +12,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class TasksService {
     private final TasksRepository tasksRepository;
-
-    public TaskResponseDTO toTaskResponseDTO(Task task) {
-        TaskResponseDTO taskResponseDTO = new TaskResponseDTO();
-        taskResponseDTO.setId(task.getId());
-        taskResponseDTO.setTitle(task.getTitle());
-        taskResponseDTO.setDescription(task.getDescription());
-        taskResponseDTO.setCompleted(task.getCompleted());
-        return taskResponseDTO;
-    }
 
     public TaskResponseDTO createTask(TaskRequestDTO taskRequestDTO) {
         Task task = new Task();
@@ -34,22 +27,20 @@ public class TasksService {
 
         tasksRepository.saveAndFlush(task);
 
-        return toTaskResponseDTO(task);
+        return TaskMapper.toTaskResponseDTO(task);
     }
 
     public List<TaskResponseDTO> getTasks() {
-        List<Task> tasks = tasksRepository.findAll();
-        List<TaskResponseDTO> tasksResponseDTOS = new ArrayList<>();
-        for (Task task : tasks) {
-            tasksResponseDTOS.add(toTaskResponseDTO(task));
-        }
-        return tasksResponseDTOS;
+        return tasksRepository.findAll()
+                .stream()
+                .map(TaskMapper::toTaskResponseDTO)
+                .toList();
     }
 
     public TaskResponseDTO getTaskById(Long id) {
-        Task task = tasksRepository.findById(id)
+        return tasksRepository.findById(id)
+                .map(TaskMapper::toTaskResponseDTO)
                 .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
-        return toTaskResponseDTO(task);
     }
 
     public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskRequestDTO) {
@@ -59,26 +50,36 @@ public class TasksService {
         taskToUpdate.setDescription(taskRequestDTO.getDescription());
         taskToUpdate.setTitle(taskRequestDTO.getTitle());
 
-        tasksRepository.saveAndFlush(taskToUpdate);
-
-        return toTaskResponseDTO(taskToUpdate);
+        return TaskMapper.toTaskResponseDTO(tasksRepository.saveAndFlush(taskToUpdate));
     }
 
     public TaskResponseDTO deleteTask(Long id) {
         Task taskToDelete = tasksRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
+
         tasksRepository.deleteById(id);
 
-        return toTaskResponseDTO(taskToDelete);
+        return TaskMapper.toTaskResponseDTO(taskToDelete);
     }
 
     public TaskResponseDTO completeTask(Long id) {
         Task taskToUpdate = tasksRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));;
+                .orElseThrow(() -> new TaskNotFound("Задача с id " + id + " не найдена"));
         taskToUpdate.setCompleted(true);
 
-        tasksRepository.saveAndFlush(taskToUpdate);
+        return TaskMapper.toTaskResponseDTO(tasksRepository.saveAndFlush(taskToUpdate));
+    }
 
-        return toTaskResponseDTO(taskToUpdate);
+    public List<TaskResponseDTO> getTasksByCompleted(Boolean completed) {
+        List<Task> tasks =  tasksRepository.findAllByCompleted(completed);
+
+        if (tasks.isEmpty()) {
+            throw new TaskNotFound("Задач с таким параметром не найдено");
+        }
+
+        return tasks
+                .stream()
+                .map(TaskMapper::toTaskResponseDTO)
+                .toList();
     }
 }
