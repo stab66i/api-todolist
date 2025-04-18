@@ -25,13 +25,17 @@ public class TasksService {
         task.setDescription(taskRequestDTO.getDescription());
         task.setCompleted(taskRequestDTO.getCompleted());
 
-        tasksRepository.saveAndFlush(task);
+        task = tasksRepository.saveAndFlush(task);
 
         return TaskMapper.toTaskResponseDTO(task);
     }
 
     public List<TaskResponseDTO> getTasks() {
-        return tasksRepository.findAll()
+        List<Task> tasks = tasksRepository.findAll();
+        if (tasks.isEmpty()) {
+            throw new TaskNotFound("Задач нет");
+        }
+        return tasks
                 .stream()
                 .map(TaskMapper::toTaskResponseDTO)
                 .toList();
