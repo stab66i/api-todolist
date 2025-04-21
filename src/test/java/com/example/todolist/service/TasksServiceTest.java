@@ -62,8 +62,7 @@ public class TasksServiceTest {
         assertEquals(savedTask.getDescription(), taskResponseDTO.getDescription());
         assertEquals(savedTask.getId(), taskResponseDTO.getId());
         assertEquals(savedTask.getCompleted(), taskResponseDTO.getCompleted());
-        //verify(tasksRepository, times(0)).saveAndFlush(savedTask);
-        //если 0 - не ломается, а 1 - ломается
+        verify(tasksRepository, times(1)).saveAndFlush(any(Task.class));
     }
 
     @Test
@@ -110,7 +109,94 @@ public class TasksServiceTest {
         assertEquals(taskToUpdate.getDescription(), responseDTO.getDescription());
         assertEquals(taskToUpdate.getId(), responseDTO.getId());
         assertEquals(taskToUpdate.getCompleted(), responseDTO.getCompleted());
-        //verify(tasksRepository, times(2)).findById(1L);
-        //2 - неверно 1 - верно :(
+        verify(tasksRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void updateTask_ShouldThrowException_WhenTasksDoNotExist() {
+        TaskRequestDTO taskRequestDTO = new TaskRequestDTO("title2", "description2", false);
+
+        when(tasksRepository.findById(1L)).thenReturn(Optional.empty());
+
+        TaskNotFound ex = assertThrows(TaskNotFound.class, () -> tasksService.updateTask(1L, taskRequestDTO));
+
+        assertEquals("Задача с id " + 1L + " не найдена", ex.getMessage());
+        verify(tasksRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void deleteTask_ShouldReturnDTO_WhenTaskDeleted() {
+        Task task = new Task(1L, "title", "description", false);
+
+        when(tasksRepository.findById(1L)).thenReturn(Optional.of(task));
+
+        TaskResponseDTO responseDTO = tasksService.deleteTask(1L);
+
+        assertEquals(task.getTitle(), responseDTO.getTitle());
+        assertEquals(task.getDescription(), responseDTO.getDescription());
+        assertEquals(task.getId(), responseDTO.getId());
+        assertEquals(task.getCompleted(), responseDTO.getCompleted());
+        verify(tasksRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    public void deleteTask_ShouldThrowException_WhenTasksDoNotExist() {
+        when(tasksRepository.findById(1L)).thenReturn(Optional.empty());
+
+        TaskNotFound ex = assertThrows(TaskNotFound.class, () -> tasksService.deleteTask(1L));
+
+        assertEquals("Задача с id " + 1L + " не найдена", ex.getMessage());
+    }
+
+    @Test
+    public void completeTask_ShouldReturnDTO_WhenTaskCompleted() {
+        Task task = new Task(1L, "title", "description", false);
+
+        when(tasksRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(tasksRepository.saveAndFlush(task)).thenReturn(task);
+
+        TaskResponseDTO responseDTO = tasksService.completeTask(1L);
+
+        assertEquals(task.getTitle(), responseDTO.getTitle());
+        assertEquals(task.getDescription(), responseDTO.getDescription());
+        assertEquals(task.getId(), responseDTO.getId());
+        assertEquals(true, responseDTO.getCompleted());
+        verify(tasksRepository, times(1)).findById(1L);
+        verify(tasksRepository, times(1)).saveAndFlush(task);
+    }
+
+    @Test
+    public void completeTask_ShouldThrowException_WhenTasksDoNotExist() {
+        when(tasksRepository.findById(1L)).thenReturn(Optional.empty());
+
+        TaskNotFound ex = assertThrows(TaskNotFound.class, () -> tasksService.completeTask(1L));
+
+        assertEquals("Задача с id " + 1L + " не найдена", ex.getMessage());
+    }
+
+    @Test
+    public void getTasksByCompleted_ShouldReturnDTO_WhenTasksExist() {
+        List<Task> tasks = List.of(new Task(1L, "title", "description", false),
+                new Task(2L, "title2", "description2", false));
+
+        when(tasksRepository.findAllByCompleted(false)).thenReturn(tasks);
+
+        List<TaskResponseDTO> taskResponseDTOs = tasksService.getTasksByCompleted(false);
+        assertEquals(2, taskResponseDTOs.size());
+        assertEquals(tasks.get(0).getId(), taskResponseDTOs.get(0).getId());
+        assertEquals(tasks.get(0).getTitle(), taskResponseDTOs.get(0).getTitle());
+        assertEquals(tasks.get(0).getDescription(), taskResponseDTOs.get(0).getDescription());
+        assertEquals(tasks.get(1).getId(), taskResponseDTOs.get(1).getId());
+        assertEquals(tasks.get(1).getTitle(), taskResponseDTOs.get(1).getTitle());
+        assertEquals(tasks.get(1).getDescription(), taskResponseDTOs.get(1).getDescription());
+        verify(tasksRepository, times(1)).findAllByCompleted(false);
+    }
+
+    @Test
+    public void getTasksByCompleted_ShouldThrowException_WhenTasksDoNotExist() {
+        List<Task> tasks = List.of();
+        when(tasksRepository.findAllByCompleted(false)).thenReturn(tasks);
+        TaskNotFound ex = assertThrows(TaskNotFound.class, () -> tasksService.getTasksByCompleted(false));
+        assertEquals("Задач с таким параметром не найдено", ex.getMessage());
     }
 }
