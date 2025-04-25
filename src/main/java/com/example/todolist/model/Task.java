@@ -21,4 +21,10 @@ public class Task {
     private String description;
 
     private Boolean completed = false;
+
+    public Task(String title, String description, Boolean completed) {
+        this.title = title;
+        this.description = description;
+        this.completed = completed;
+    }
 }
