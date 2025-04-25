@@ -33,8 +33,6 @@ public class TasksControllerTests {
     @Autowired
     private TasksRepository repository;
 
-    private TasksControllerTestData testData;
-
     @BeforeEach
     public void setUp() {
         repository.deleteAll();
